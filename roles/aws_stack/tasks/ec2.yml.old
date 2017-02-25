@@ -1,0 +1,84 @@
+---
+# tasks file for provisioning ec2
+
+- name: Create an EC2 key
+  ec2_key:
+    name: "{{ project_name }}-{{ server_env }}-key"
+    region: "{{ server_region }}"
+  register: ec2_key
+
+- debug:
+    var: ec2_key
+
+- debug:
+    var: ec2_key.key.private_key
+
+- name: save private key
+  copy: 
+    content="{{ ec2_key.key.private_key }}" 
+    dest="./aws-{{ server_env }}-private.pem" 
+    mode=0600
+  when: ec2_key.changed
+
+- name: Provision Instances
+  ec2:
+    key_name: "{{ project_name }}-{{ server_env }}-key"
+    count: "{{ server_count }}"
+    group_id: "{{ app_sg_config.group_id }}"
+    instance_type: "{{ server_instance_type | default('t2.micro') }}"
+    instance_profile_name: "{{ server_instance_profile_name | default('') }}"
+    image: "{{ server_ami_name }}"
+    region: "{{ server_region }}"
+    vpc_subnet_id: "{{ ec2_vpc_subnet_id }}"
+    monitoring: "{{ ec2_monitoring | default('yes') }}"
+    state: "{{ server_state | default('present')}}"
+    instance_tags: 
+      Name: "{{ item.name }}"
+      app: "{{ item.app }}"
+      owner: "{{ item.owner }}"
+  register: ec2
+  with_items: "{{ cake_services }}"
+
+- debug:
+    var: ec2
+
+- debug:
+    var: ec2.results
+
+- debug:
+    var: ec2.results.instance_ids
+
+- name: Add new instance to host group
+  add_host:
+    hostname: "{{ item.public_ip }}"
+    groupname: launched
+  with_items: "{{ ec.instances }}"
+
+  #- name: Configure instance
+  #  hosts: launched
+  #  become: True
+  #  gather_facts: True
+  #  roles:
+  #    - debug
+  #       msg: "test"
+          #   - name: Add docker apt keys
+          #     apt_key: keyserver=keyserver.ubuntu.com id=36A1D7869245C8950F966E92D8576A8BA88D21E9
+          #   - name: Update apt
+          #     apt_repository: repo='deb https://get.docker.com docker main' state=present
+          #   - name: Install Docker
+          #     apt: pkg=lxc-docker update_cache=yes
+          #   - name: Start Docker
+          #     service: name=docker state=restarted
+          #   - name: Install Docker Copose
+          #     command: curl -L "https://github.com/docker/compose/releases/download/1.11.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+          #
+          #   - name: ELK Deploy
+          #     unarchive:
+          #       src: files/docker-elk.tar.gz
+          #       dest: /mnt
+          #   - name: start docker compose
+          #     command: cd /mnt && docker-compose up      
+          # 
+          #    
+          #
+          #

@@ -1,0 +1,61 @@
+version: '2'
+
+services:
+  elasticsearch:
+    build: elasticsearch/
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+    networks:
+      - docker_elk
+
+  logstashshipper:
+    build: logstashshipper/
+    command: -f /etc/logstash/conf.d/
+    volumes:
+      - ./logstashshipper/config:/etc/logstash/conf.d
+      - /var/log/wp:/var/log
+    ports:
+      - "5000:5000"
+    networks:
+      - docker_elk
+    depends_on:
+      - elasticsearch
+  kibana:
+    build: kibana/
+    volumes:
+      - ./kibana/config/:/etc/kibana/
+    ports:
+      - "5601:5601"
+    networks:
+      - docker_elk
+    depends_on:
+      - elasticsearch
+
+  wordpress:
+    build: wordpress/
+    volumes:
+      - /var/log/wp:/var/www/html/wordpress/wp-content/
+      - /var/log/wp:/var/log/apache2/
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_PASSWORD: example
+    networks:
+      - docker_elk
+    depends_on:
+      - elasticsearch
+  mysql:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    networks:
+      - docker_elk
+    depends_on:
+      - elasticsearch
+
+networks:
+  docker_elk:
+    driver: bridge

@@ -1,0 +1,16 @@
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  # vars_files:
+  # - roles/aws_stack/vars/aws-creds.yml
+
+  pre_tasks:
+   - debug:
+       msg: 'starting provisioning'
+
+  roles:
+   - aws_stack
+
+  post_tasks:
+   - debug:
+       msg: 'completed provisioning aws'

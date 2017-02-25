@@ -1,0 +1,41 @@
+---
+# task file for provisioning elb
+
+- name: Create ELb
+  ec2_elb_lb:
+    name: "cake-{{ elb_region}}"
+    state: "{{ elb_state }}"
+    region: "{{ elb_region}}"
+    security_group_ids: "{{ elb_sg_config.group_id}}"
+    subnets: "{{ elb_subnets }}"
+    connection_draining_timeout: "{{ elb_con_draining }}"
+    idle_timeout: "{{ elb_idletimeout }}"
+    cross_az_load_balancing: "{{ elb_cross_az_lb }}"
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 8080
+      - protocol: tcp
+        load_balancer_port: 5601
+        instance_port: 5601
+    health_check: 
+      ping_protocol: tcp
+      ping_port: 8080
+      #  ping_path: "/index.html" # not required for tcp or ssl
+      response_timeout: 5 # seconds
+      interval: 30 # seconds
+      unhealthy_threshold: 2
+      healthy_threshold: 5
+    tags:
+      Name: "CAKE ELB"
+      stack: "dev"
+      client: "cack"
+  register: ec2_elb
+  #access_logs:
+  #  interval: 5 # minutes (defaults to 60)
+  #  s3_location: "my-bucket" # This value is required if access_logs is set
+  #  s3_prefix: "logs"
+
+- debug:
+    var: ec2_elb
+

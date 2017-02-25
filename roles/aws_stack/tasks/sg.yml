@@ -1,0 +1,52 @@
+---
+# creates security groups
+-  name: ELB security group
+   ec2_group:
+     name: "cake_security_group"
+     description: "cake elb security group"
+     region: "{{ server_region }}"
+     vpc_id: "vpc-a9d843cd"
+     rules:
+       - proto: tcp
+         from_port: 80
+         to_port: 80
+         cidr_ip: 0.0.0.0/0
+       - proto: tcp
+         from_port: 5601
+         to_port: 5601
+         cidr_ip: 0.0.0.0/0
+       - proto: tcp
+         from_port: 443
+         to_port: 443
+         cidr_ip: 0.0.0.0/0
+     rules_egress:
+       - proto: all
+         cidr_ip: 0.0.0.0/0
+   register: elb_sg_config
+
+- debug:
+    var: elb_sg_config
+
+- name: Application security group
+  ec2_group:
+    name: "{{ project_name }}_security_group"
+    description: "{{ project_name }} security group"
+    region: "{{ server_region }}"
+    vpc_id: "vpc-a9d843cd"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+    rules_egress:
+       - proto: all
+         cidr_ip: 0.0.0.0/0
+  register: app_sg_config
+
+- debug:
+    var: app_sg_config
+

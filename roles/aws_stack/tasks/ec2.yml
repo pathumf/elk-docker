@@ -1,0 +1,45 @@
+---
+# tasks file for provisioning ec2
+
+- name: Create an EC2 key
+  ec2_key:
+    name: "{{ project_name }}-{{ server_env }}-key"
+    region: "{{ server_region }}"
+  register: ec2_key
+
+- debug:
+    var: ec2_key
+
+- debug:
+    var: ec2_key.key.private_key
+
+- name: save private key
+  copy: 
+    content: "{{ ec2_key.key.private_key }}" 
+    dest: "./aws-{{ server_env }}-private.pem" 
+    mode: 0600
+  when: ec2_key.changed
+
+- name: Provision Instances
+  ec2:
+    key_name: "{{ project_name }}-{{ server_env }}-key"
+    count: "{{ server_count }}"
+    group_id: "{{ app_sg_config.group_id }}"
+    instance_type: "{{ server_instance_type | default('t2.micro') }}"
+    instance_profile_name: "{{ server_instance_profile_name | default('') }}"
+    image: "{{ server_ami_name }}"
+    region: "{{ server_region }}"
+    vpc_subnet_id: "{{ ec2_vpc_subnet_id }}"
+    monitoring: "{{ ec2_monitoring | default('yes') }}"
+    state: "{{ server_state | default('present')}}"
+    instance_tags: 
+      Name: "{{ item.name }}"
+      app: "{{ item.app }}"
+      owner: "{{ item.owner }}"
+  register: ec2
+  with_items: "{{ cake_services }}"
+
+
+- debug:
+    var: ec2.results.instances
+

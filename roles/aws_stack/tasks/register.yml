@@ -1,0 +1,31 @@
+---
+
+#gather facts about ec2 elb
+
+- name: Gather elb facts
+  ec2_elb_facts:
+    names: "{{ ec2_elb.elb.name}}"
+    region: "{{ ec2_elb.elb.region}}"
+  register: elb_facts
+
+- name: Gather ec2 facts
+  ec2_remote_facts:
+    filters:
+      instance-state-name: running
+    region: "{{ ec2_elb.elb.region}}"
+  register: aws_ec2_facts
+
+- debug: 
+    var: aws_ec2_facts.instances
+
+- debug:
+    var: elb_facts
+
+- name: register instances to elb
+  ec2_elb:
+    instance_id: "{{ item.id }}"
+    ec2_elbs: "{{ ec2_elb.elb.name}}"
+    region: "{{ ec2_elb.elb.region}}"
+    state: present
+  with_items: "{{ aws_ec2_facts.instances }}"
+  ignore_errors: yes

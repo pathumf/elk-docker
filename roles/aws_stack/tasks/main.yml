@@ -1,0 +1,7 @@
+---
+# tasks file for cake_stack
+
+- include: sg.yml
+- include: ec2.yml
+- include: ec2_elb.yml
+- include: register.yml

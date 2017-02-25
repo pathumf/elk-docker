@@ -1,0 +1,49 @@
+---
+#  tasks file for docker
+- name: update 
+  command: apt-get update
+
+- name: install dependence 
+  command: apt-get install -y --no-install-recommends linux-image-extra-3.13.0-107-generic 
+  
+- name: install image
+  command: apt-get install -y --no-install-recommends  linux-image-extra-virtual
+
+- name: add key 
+  apt_key:
+    url: "https://apt.dockerproject.org/gpg"
+    state: present
+
+- name: verify key
+  command: apt-key fingerprint 58118E89F3A912897C070ADBF76221572C52609D
+
+- name: add stable repo
+  command: add-apt-repository "deb https://apt.dockerproject.org/repo/ ubuntu-trusty main"
+
+- name: update apt 
+  command: apt-get update  
+
+- name: Install Docker 
+  command: sudo apt-get -y install docker-engine
+  
+- name: Install Docker Copose
+  command: curl -L "https://github.com/docker/compose/releases/download/1.11.1/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose 
+- name: docker compose
+  command: chmod +x /usr/local/bin/docker-compose
+
+- name: ELK Deploy
+  unarchive:
+    src: files/docker-elk.tar.gz
+    dest: /mnt
+
+- name: set vm valuse
+  command: sysctl -w vm.max_map_count=262144
+
+- name: create mout dir 
+  command: mkdir -p /var/log/wp  
+
+- name: run docker compose 
+  shell: docker-compose up -d
+  args:
+    chdir: /mnt/docker-elk/
+
