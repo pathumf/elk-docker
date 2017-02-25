@@ -18,11 +18,9 @@ Based on the official images:
 2. Install [Docker-compose](http://docs.docker.com/compose/install/) **version >= 1.6**.
 3. Clone this repository
 
-## Increase max_map_count on your host (Linux)
+## Run Ansible playbook
+1. Create aws infrastructure
+ansible-playbook -i localhost aws.yml
 
-You need to increase `max_map_count` on your Docker host:
-
-```bash
-$ sudo sysctl -w vm.max_map_count=262144
-```
-
+2. Deploy ELK cluster 
+ansible-playbook -i hosts docker.yml
