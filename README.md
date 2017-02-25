@@ -20,7 +20,7 @@ Based on the official images:
 
 ## Run Ansible playbook
 1. Create aws infrastructure
-ansible-playbook -i localhost aws.yml
+   ansible-playbook -i localhost aws.yml
 
 2. Deploy ELK cluster 
-ansible-playbook -i hosts docker.yml
+   ansible-playbook -i hosts docker.yml
